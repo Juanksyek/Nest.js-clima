@@ -1,5 +1,5 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import fetch from 'node-fetch';
+import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -17,22 +17,19 @@ export class WeatherService {
     console.log('Request URL:', url);
 
     try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        const errorMessage = await response.text();
-        throw new HttpException(errorMessage, response.status);
+      const response = await axios.get(url);
+
+      if (response && response.data) {
+        return response.data;
+      } else {
+        throw new HttpException('Invalid response from weather API', HttpStatus.BAD_REQUEST);
       }
-      const data = await response.json();
-      return data;
     } catch (error) {
       if (error.response) {
-        console.log('Error response:', error.response.data);
         throw new HttpException(error.response.data, error.response.status);
       } else if (error.request) {
-        console.log('Error request:', error.request);
         throw new HttpException('No response received from weather API', HttpStatus.SERVICE_UNAVAILABLE);
       } else {
-        console.log('Error message:', error.message);
         throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
       }
     }
